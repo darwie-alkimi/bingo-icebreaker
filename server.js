@@ -155,9 +155,15 @@ app.prepare().then(() => {
       const newLines = Array.from(nowCompleted).filter(l => !existingLineIds.has(l))
 
       const newWinners = []
+      const playerAlreadyOnPodium = state.winners.some(w => w.playerId === playerId && w.podiumRank !== null)
+
       for (const lineType of newLines) {
-        const podiumCount = state.winners.filter(w => w.podiumRank !== null).length
-        const podiumRank = podiumCount < 3 ? podiumCount + 1 : null
+        // Only award a podium rank for the player's first BINGO line
+        let podiumRank = null
+        if (!playerAlreadyOnPodium && newLines.indexOf(lineType) === 0) {
+          const podiumCount = state.winners.filter(w => w.podiumRank !== null).length
+          podiumRank = podiumCount < 3 ? podiumCount + 1 : null
+        }
         const entry = {
           playerId,
           playerName: player.name,

@@ -10,10 +10,17 @@ const MEDALS = ['🥇', '🥈', '🥉']
 const RANK_LABELS = ['1st', '2nd', '3rd']
 
 export default function Podium({ winners }: Props) {
-  const podiumWinners = winners
-    .filter(w => w.podiumRank !== null)
+  // One entry per player — their highest (lowest number) podium rank
+  const byPlayer = new Map<string, Winner>()
+  for (const w of winners) {
+    if (w.podiumRank === null) continue
+    const existing = byPlayer.get(w.playerId)
+    if (!existing || w.podiumRank < existing.podiumRank!) {
+      byPlayer.set(w.playerId, w)
+    }
+  }
+  const podiumWinners = Array.from(byPlayer.values())
     .sort((a, b) => (a.podiumRank ?? 99) - (b.podiumRank ?? 99))
-    .filter((w, _, arr) => arr.findIndex(x => x.playerId === w.playerId) === arr.indexOf(w))
     .slice(0, 3)
 
   if (podiumWinners.length === 0) return null

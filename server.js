@@ -1,0 +1,171 @@
+const { createServer } = require('http')
+const { Server } = require('socket.io')
+const next = require('next')
+
+const dev = process.env.NODE_ENV !== 'production'
+const app = next({ dev })
+const handle = app.getRequestHandler()
+
+// ─── In-memory game state ────────────────────────────────────────────────────
+
+const state = {
+  // playerId → { id, name }
+  players: new Map(),
+  // playerId → { squareOrder: number[], marks: Map<position, name> }
+  cards: new Map(),
+  // Array of { playerId, playerName, lineType, podiumRank, achievedAt }
+  winners: [],
+}
+
+// ─── Bingo logic (duplicated from lib/bingo.ts for plain JS) ────────────────
+
+const WIN_LINES = [
+  { id: 'row_0', positions: [0, 1, 2, 3] },
+  { id: 'row_1', positions: [4, 5, 6, 7] },
+  { id: 'row_2', positions: [8, 9, 10, 11] },
+  { id: 'row_3', positions: [12, 13, 14, 15] },
+  { id: 'col_0', positions: [0, 4, 8, 12] },
+  { id: 'col_1', positions: [1, 5, 9, 13] },
+  { id: 'col_2', positions: [2, 6, 10, 14] },
+  { id: 'col_3', positions: [3, 7, 11, 15] },
+  { id: 'diag_main', positions: [0, 5, 10, 15] },
+  { id: 'diag_anti', positions: [3, 6, 9, 12] },
+]
+
+function shuffleCard() {
+  const indices = Array.from({ length: 16 }, (_, i) => i)
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[indices[i], indices[j]] = [indices[j], indices[i]]
+  }
+  return indices
+}
+
+function getCompletedLines(markedPositions) {
+  const completed = new Set()
+  for (const line of WIN_LINES) {
+    if (line.positions.every(p => markedPositions.has(p))) {
+      completed.add(line.id)
+    }
+  }
+  return completed
+}
+
+// ─── Serialise state for new joiners ────────────────────────────────────────
+
+function serializeState() {
+  return {
+    players: Array.from(state.players.values()),
+    winners: state.winners,
+  }
+}
+
+// ─── Server startup ──────────────────────────────────────────────────────────
+
+app.prepare().then(() => {
+  const httpServer = createServer((req, res) => handle(req, res))
+
+  const io = new Server(httpServer, {
+    cors: { origin: '*' },
+  })
+
+  io.on('connection', socket => {
+    // ── join ────────────────────────────────────────────────────────────────
+    socket.on('join', ({ name }, cb) => {
+      if (!name || !name.trim()) return cb({ error: 'Name required' })
+
+      const playerId = Math.random().toString(36).slice(2)
+      const squareOrder = shuffleCard()
+
+      state.players.set(playerId, { id: playerId, name: name.trim() })
+      state.cards.set(playerId, { squareOrder, marks: new Map() })
+
+      socket.data.playerId = playerId
+
+      // Send this player their private card + full current state
+      cb({
+        playerId,
+        squareOrder,
+        state: serializeState(),
+        marks: [], // fresh card, no marks yet
+      })
+
+      // Broadcast new player to everyone else
+      socket.broadcast.emit('player_joined', { id: playerId, name: name.trim() })
+    })
+
+    // ── rejoin (page refresh) ────────────────────────────────────────────────
+    socket.on('rejoin', ({ playerId }, cb) => {
+      const player = state.players.get(playerId)
+      const card = state.cards.get(playerId)
+      if (!player || !card) return cb({ error: 'Session not found' })
+
+      socket.data.playerId = playerId
+      cb({
+        squareOrder: card.squareOrder,
+        marks: Array.from(card.marks.entries()).map(([square_index, matched_name]) => ({ square_index, matched_name })),
+        state: serializeState(),
+      })
+    })
+
+    // ── mark ─────────────────────────────────────────────────────────────────
+    socket.on('mark', ({ squareIndex, matchedName }, cb) => {
+      const playerId = socket.data.playerId
+      if (!playerId) return cb({ error: 'Not in a session' })
+
+      const card = state.cards.get(playerId)
+      const player = state.players.get(playerId)
+      if (!card || !player) return cb({ error: 'Session not found' })
+
+      if (card.marks.has(squareIndex)) return cb({ error: 'Square already marked' })
+
+      card.marks.set(squareIndex, (matchedName || '').trim())
+
+      // Check for new BINGO lines
+      const markedPositions = new Set(card.marks.keys())
+      const nowCompleted = getCompletedLines(markedPositions)
+
+      // Find lines the player hasn't claimed yet
+      const existingLineIds = new Set(
+        state.winners.filter(w => w.playerId === playerId).map(w => w.lineType)
+      )
+      const newLines = Array.from(nowCompleted).filter(l => !existingLineIds.has(l))
+
+      const newWinners = []
+      for (const lineType of newLines) {
+        const podiumCount = state.winners.filter(w => w.podiumRank !== null).length
+        const podiumRank = podiumCount < 3 ? podiumCount + 1 : null
+        const entry = {
+          playerId,
+          playerName: player.name,
+          lineType,
+          podiumRank,
+          achievedAt: new Date().toISOString(),
+        }
+        state.winners.push(entry)
+        newWinners.push(entry)
+      }
+
+      cb({ ok: true })
+
+      // Broadcast the mark to this player's own listeners (other tabs)
+      socket.broadcast.emit('mark_update', { playerId, squareIndex, matchedName: (matchedName || '').trim() })
+
+      // Broadcast any new winners to everyone
+      for (const winner of newWinners) {
+        io.emit('new_winner', winner)
+      }
+    })
+
+    // ── disconnect ───────────────────────────────────────────────────────────
+    socket.on('disconnect', () => {
+      // Keep the player in state so they can rejoin
+      // (their card is preserved in memory for the duration of the event)
+    })
+  })
+
+  const port = process.env.PORT || 3000
+  httpServer.listen(port, () => {
+    console.log(`> Ready on http://localhost:${port}`)
+  })
+})

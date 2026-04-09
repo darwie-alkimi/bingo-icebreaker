@@ -77,8 +77,16 @@ app.prepare().then(() => {
       const playerId = Math.random().toString(36).slice(2)
       const squareOrder = shuffleCard()
 
+      const TIMEOUT_MS = 60 * 60 * 1000 // 60 minutes
+
+      const inactivityTimer = setTimeout(() => {
+        state.players.delete(playerId)
+        state.cards.delete(playerId)
+        io.emit('player_left', playerId)
+      }, TIMEOUT_MS)
+
       state.players.set(playerId, { id: playerId, name: name.trim() })
-      state.cards.set(playerId, { squareOrder, marks: new Map() })
+      state.cards.set(playerId, { squareOrder, marks: new Map(), inactivityTimer })
 
       socket.data.playerId = playerId
 
@@ -126,6 +134,15 @@ app.prepare().then(() => {
       if (card.marks.has(squareIndex)) return cb({ error: 'Square already marked' })
 
       card.marks.set(squareIndex, (matchedName || '').trim())
+
+      // Reset inactivity timer on activity
+      clearTimeout(card.inactivityTimer)
+      card.inactivityTimer = setTimeout(() => {
+        state.players.delete(playerId)
+        state.cards.delete(playerId)
+        io.emit('player_left', playerId)
+      }, 60 * 60 * 1000)
+
 
       // Check for new BINGO lines
       const markedPositions = new Set(card.marks.keys())

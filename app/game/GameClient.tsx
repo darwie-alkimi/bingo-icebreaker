@@ -86,6 +86,10 @@ export default function GameClient() {
       })
     })
 
+    socket.on('player_left', (leftId: string) => {
+      setPlayers(prev => prev.filter(p => p.id !== leftId))
+    })
+
     socket.on('mark_update', ({ playerId: fromId, squareIndex, matchedName }: {
       playerId: string; squareIndex: number; matchedName: string
     }) => {
@@ -103,6 +107,7 @@ export default function GameClient() {
 
     return () => {
       socket.off('player_joined')
+      socket.off('player_left')
       socket.off('mark_update')
       socket.off('new_winner')
     }

@@ -96,11 +96,17 @@ app.prepare().then(() => {
 
     // ── rejoin (page refresh) ────────────────────────────────────────────────
     socket.on('rejoin', ({ playerId }, cb) => {
-      const player = state.players.get(playerId)
       const card = state.cards.get(playerId)
-      if (!player || !card) return cb({ error: 'Session not found' })
+      if (!card) return cb({ error: 'Session not found' })
 
+      // Restore player to the live list (they may have disconnected)
+      const existingPlayer = state.players.get(playerId)
+      if (!existingPlayer) return cb({ error: 'Session not found' })
+
+      state.players.set(playerId, existingPlayer)
       socket.data.playerId = playerId
+      socket.broadcast.emit('player_joined', existingPlayer)
+
       cb({
         squareOrder: card.squareOrder,
         marks: Array.from(card.marks.entries()).map(([square_index, matched_name]) => ({ square_index, matched_name })),
@@ -159,8 +165,11 @@ app.prepare().then(() => {
 
     // ── disconnect ───────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
-      // Keep the player in state so they can rejoin
-      // (their card is preserved in memory for the duration of the event)
+      const playerId = socket.data.playerId
+      if (!playerId) return
+      state.players.delete(playerId)
+      // Keep the card in memory so they can rejoin and pick up where they left off
+      io.emit('player_left', playerId)
     })
   })
 

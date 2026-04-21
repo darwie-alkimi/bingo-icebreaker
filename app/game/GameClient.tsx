@@ -176,7 +176,7 @@ export default function GameClient() {
               {markedCount}
             </span>
             <span className="w-px h-5 bg-[#e5e5e5]" />
-            <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-[#aaa]">/ 16</span>
+            <span className="text-[11px] font-semibold tracking-[1.5px] uppercase text-[#aaa]">/ 9</span>
             {hasBingo && (
               <>
                 <span className="w-px h-5 bg-[#e5e5e5]" />

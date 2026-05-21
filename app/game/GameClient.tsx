@@ -105,11 +105,29 @@ export default function GameClient() {
       if (winner.playerId === currentPlayerId.current) setShowCelebration(true)
     })
 
+    // Re-sync state from server after any reconnect (e.g. after a deploy)
+    const handleReconnect = () => {
+      socket.emit('rejoin', { playerId: pid }, (res: {
+        error?: string
+        squareOrder?: number[]
+        marks?: { square_index: number; matched_name: string }[]
+        state?: { players: Player[]; winners: Winner[] }
+      }) => {
+        if (res.error) return
+        if (res.state) {
+          setPlayers(res.state.players)
+          setWinners(res.state.winners)
+        }
+      })
+    }
+    socket.io.on('reconnect', handleReconnect)
+
     return () => {
       socket.off('player_joined')
       socket.off('player_left')
       socket.off('mark_update')
       socket.off('new_winner')
+      socket.io.off('reconnect', handleReconnect)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

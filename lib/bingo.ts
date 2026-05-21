@@ -4,7 +4,7 @@ export const PROMPTS: string[] = [
   'Spends too much money on AI subscriptions',
   'Taught their parents how to use AI',
   'Works in a startup',
-  'Ran a marathon',
+  'Is training for a marathon',
   'Set up their own OpenClaw agent',
   'Rewatched the same show 3+ times',
   'Loves pineapple on pizza',

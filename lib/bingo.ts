@@ -12,7 +12,7 @@ export const PROMPTS: string[] = [
   'Is a Richmond Tigers fan',
   'Has built something using an AI API',
   'Pays for a Claude Max plan',
-  'Has automated a task they used to do manually',
+  'Listens to AI podcasts on the way to work',
   'Has witnessed an AI confidently hallucinate',
   'Thinks AI will change their industry within 5 years',
 ]

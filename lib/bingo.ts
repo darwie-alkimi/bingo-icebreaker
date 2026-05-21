@@ -9,7 +9,7 @@ export const PROMPTS: string[] = [
   'Rewatched the same show 3+ times',
   'Loves pineapple on pizza',
   'Has used AI to write an email or message',
-  'Can name more than 5 AI companies',
+  'Is a Richmond Tigers fan',
   'Has built something using an AI API',
   'Uses AI as their go-to search engine',
   'Has automated a task they used to do manually',

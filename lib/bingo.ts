@@ -6,7 +6,7 @@ export const PROMPTS: string[] = [
   'Works in a startup',
   'Is training for a marathon',
   'Set up their own OpenClaw agent',
-  'Rewatched the same show 3+ times',
+  'Rewatched the same show over twice',
   'Loves pineapple on pizza',
   'Regularly goes to karaoke with colleagues',
   'Is a Richmond Tigers fan',

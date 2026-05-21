@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getSocket } from '@/lib/socket'
 
-export default function JoinPage() {
+function JoinForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isHost = searchParams.get('host') === 'true'
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,7 +39,7 @@ export default function JoinPage() {
       sessionStorage.setItem('bingo_player_name', name.trim())
       sessionStorage.setItem('bingo_square_order', JSON.stringify(res.squareOrder!))
 
-      router.push('/game')
+      router.push(isHost ? '/game?host=true' : '/game')
     })
   }
 
@@ -87,5 +89,13 @@ export default function JoinPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function JoinPage() {
+  return (
+    <Suspense>
+      <JoinForm />
+    </Suspense>
   )
 }

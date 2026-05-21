@@ -186,6 +186,13 @@ app.prepare().then(() => {
       }
     })
 
+    // ── reset (host only) ────────────────────────────────────────────────────
+    socket.on('reset', (_, cb) => {
+      state.winners = []
+      io.emit('game_reset')
+      cb({ ok: true })
+    })
+
     // ── disconnect ───────────────────────────────────────────────────────────
     socket.on('disconnect', () => {
       const playerId = socket.data.playerId

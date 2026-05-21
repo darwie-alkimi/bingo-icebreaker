@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { getSocket } from '@/lib/socket'
 import { getCompletedLines } from '@/lib/bingo'
 import { Mark, Player, Winner } from '@/lib/types'
@@ -13,6 +13,8 @@ import BingoCelebration from './components/BingoCelebration'
 
 export default function GameClient() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isHost = searchParams.get('host') === 'true'
 
   const [playerId, setPlayerId] = useState<string | null>(null)
   const [playerName, setPlayerName] = useState<string | null>(null)
@@ -105,6 +107,10 @@ export default function GameClient() {
       if (winner.playerId === currentPlayerId.current) setShowCelebration(true)
     })
 
+    socket.on('game_reset', () => {
+      setWinners([])
+    })
+
     // Re-sync state from server after any reconnect (e.g. after a deploy)
     const handleReconnect = () => {
       socket.emit('rejoin', { playerId: pid }, (res: {
@@ -127,6 +133,7 @@ export default function GameClient() {
       socket.off('player_left')
       socket.off('mark_update')
       socket.off('new_winner')
+      socket.off('game_reset')
       socket.io.off('reconnect', handleReconnect)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -221,6 +228,21 @@ export default function GameClient() {
         <p className="text-center text-[#bbb] text-xs mt-6 tracking-wider uppercase">
           Tap a square · enter who matches · get a line to win
         </p>
+
+        {isHost && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={() => {
+                if (confirm('Reset leaderboard for everyone?')) {
+                  getSocket().emit('reset', {}, () => {})
+                }
+              }}
+              className="px-4 py-2 text-xs font-semibold tracking-wider uppercase rounded-full border border-red-200 text-red-400 hover:border-red-400 hover:text-red-600 transition-colors"
+            >
+              Reset leaderboard
+            </button>
+          </div>
+        )}
       </div>
 
       {modalPosition !== null && (

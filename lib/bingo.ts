@@ -1,5 +1,5 @@
 export const PROMPTS: string[] = [
-  'Lived in a different country outside of England',
+  'Lived in a different country outside of Australia',
   'Reels feed is filled with AI memes',
   'Spends too much money on AI subscriptions',
   'Taught their parents how to use AI',

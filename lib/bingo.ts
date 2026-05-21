@@ -8,22 +8,31 @@ export const PROMPTS: string[] = [
   'Set up their own OpenClaw agent',
   'Rewatched the same show 3+ times',
   'Loves pineapple on pizza',
+  'Has used AI to write an email or message',
+  'Can name more than 5 AI companies',
+  'Has built something using an AI API',
+  'Uses AI as their go-to search engine',
+  'Has automated a task they used to do manually',
+  'Has witnessed an AI confidently hallucinate',
+  'Thinks AI will change their industry within 5 years',
 ]
 
-// Win lines for a 3x3 grid (positions 0-8)
+// Win lines for a 4x4 grid (positions 0-15)
 export const WIN_LINES: { id: string; positions: number[] }[] = [
-  { id: 'row_0', positions: [0, 1, 2] },
-  { id: 'row_1', positions: [3, 4, 5] },
-  { id: 'row_2', positions: [6, 7, 8] },
-  { id: 'col_0', positions: [0, 3, 6] },
-  { id: 'col_1', positions: [1, 4, 7] },
-  { id: 'col_2', positions: [2, 5, 8] },
-  { id: 'diag_main', positions: [0, 4, 8] },
-  { id: 'diag_anti', positions: [2, 4, 6] },
+  { id: 'row_0', positions: [0, 1, 2, 3] },
+  { id: 'row_1', positions: [4, 5, 6, 7] },
+  { id: 'row_2', positions: [8, 9, 10, 11] },
+  { id: 'row_3', positions: [12, 13, 14, 15] },
+  { id: 'col_0', positions: [0, 4, 8, 12] },
+  { id: 'col_1', positions: [1, 5, 9, 13] },
+  { id: 'col_2', positions: [2, 6, 10, 14] },
+  { id: 'col_3', positions: [3, 7, 11, 15] },
+  { id: 'diag_main', positions: [0, 5, 10, 15] },
+  { id: 'diag_anti', positions: [3, 6, 9, 12] },
 ]
 
 export function shuffleCard(): number[] {
-  const indices = Array.from({ length: 9 }, (_, i) => i)
+  const indices = Array.from({ length: 16 }, (_, i) => i)
   for (let i = indices.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[indices[i], indices[j]] = [indices[j], indices[i]]

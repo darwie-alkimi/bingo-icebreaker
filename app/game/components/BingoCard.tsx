@@ -23,8 +23,8 @@ export default function BingoCard({ squareOrder, marks, onMarkSquare }: Props) {
   }
 
   return (
-    <div className="w-full max-w-[520px]">
-      <div className="grid grid-cols-3 gap-[10px]">
+    <div className="w-full max-w-[640px]">
+      <div className="grid grid-cols-4 gap-[8px]">
         {squareOrder.map((promptIndex, position) => (
           <BingoSquare
             key={position}

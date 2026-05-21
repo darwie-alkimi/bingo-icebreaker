@@ -8,13 +8,13 @@ export const PROMPTS: string[] = [
   'Set up their own OpenClaw agent',
   'Rewatched the same show 3+ times',
   'Loves pineapple on pizza',
-  'Has used AI to write an email or message',
+  'Regularly goes to karaoke with colleagues',
   'Is a Richmond Tigers fan',
-  'Has built something using an AI API',
+  'Has a favourite rooftop bar',
   'Pays for a Claude Max plan',
   'Listens to AI podcasts on the way to work',
-  'Has witnessed an AI confidently hallucinate',
-  'Thinks AI will change their industry within 5 years',
+  'Is learning to post content',
+  'Wakes up at 5am',
 ]
 
 // Win lines for a 4x4 grid (positions 0-15)
